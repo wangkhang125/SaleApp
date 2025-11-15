@@ -1,6 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
+from flask_login import login_user
+from werkzeug.utils import redirect
+from eapp import app, dao, login
+from eapp.dao import auth_user
 
-from eapp import app, dao
 
 @app.route('/')
 def index():
@@ -12,6 +15,19 @@ def index():
     return render_template('index.html',
                            categories=categories, products=products)
 
+@app.route('/login', methods=['post'])
+def login_process():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    user = auth_user(username=username, password=password)
+    if user:
+        login_user(user=user)
+
+    return redirect('/admin')
+
+@login.user_loader
+def load_user(id):
+    return dao.get_user_by_id(id)
 
 if __name__ == '__main__':
     from eapp import admin

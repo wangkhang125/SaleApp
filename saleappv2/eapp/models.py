@@ -1,7 +1,12 @@
-from sqlalchemy import Integer, String, Column, Boolean, Text, Float, ForeignKey
+import hashlib
+from base64 import encode
+from tkinter.font import names
+
+from sqlalchemy import Integer, String, Column, Boolean, Text, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship, backref
 from eapp import app, db
-
+from flask_login import UserMixin
+from enum import Enum as UserEnum
 
 class BaseModel(db.Model):
     __abstract__ = True #Lệnh này dùng để ngăn class BaseModel này tạo bảng vì có thuộc tính Column ở dưới
@@ -122,6 +127,19 @@ products = [{
             "https://res.cloudinary.com/dxxwcby8l/image/upload/v1647248722/r8sjly3st7estapvj19u.jpg",
         "category_id": 1}]
 
+class UserRole(UserEnum):
+    USER = 1
+    ADMIN = 2
+
+class User(BaseModel, UserMixin):
+    name = Column(String(50), nullable=False)
+    avatar = Column(String(100), default="https://res.cloudinary.com/dxxwcby8l/image/upload/v1647248722/r8sjly3st7estapvj19u.jpg")
+    username = Column(String(50), nullable=False, unique=True)
+    password = Column(String(100), nullable=False)
+    user_role = Column(Enum(UserRole), default=UserRole.USER)
+    def __str__(self):
+        return self.name
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
@@ -131,10 +149,15 @@ if __name__ == '__main__':
         # c3 = Category(name="Laptop")
         # db.session.add_all([c1,c2,c3])
         # db.session.commit()
+        #
+        # for p in products:
+        #     prod = Product(**p)
+        #     db.session.add(prod)
+        #
+        # db.session.commit()
 
-        for p in products:
-            prod = Product(**p)
-            db.session.add(prod)
-
+        import hashlib
+        u = User(name='Admin', username='admin', password=str(hashlib.md5('Abc123'.encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN)
+        db.session.add(u)
         db.session.commit()
 
